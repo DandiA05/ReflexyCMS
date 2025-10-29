@@ -13,7 +13,7 @@ import { transaksiList } from "./Data";
 import DatePicker from "@/components/form/date-picker";
 import Label from "../form/Label";
 import Select from "../form/Select";
-import { PlusIcon, ChevronDownIcon, DocsIcon } from "@/icons";
+import { PlusIcon, ChevronDownIcon } from "@/icons";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 import Pagination from "../tables/Pagination";
@@ -325,7 +325,11 @@ const TransaksiPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-theme-sm px-4 py-3 text-center text-gray-500">
-                      <Button size="xs" variant="warning" onClick={()=> setIsOpenAlert(true)}>
+                      <Button
+                        size="xs"
+                        variant="warning"
+                        onClick={() => setIsOpenAlert(true)}
+                      >
                         Print
                       </Button>
                     </TableCell>
@@ -397,6 +401,7 @@ const TransaksiPage = () => {
           <div>
             <Label>Layanan</Label>
             <Select
+              onChange={() => console.log("layanan")}
               options={[
                 { value: "Refleksi 60 Menit", label: "Refleksi 60 Menit" },
                 { value: "Refleksi 90 Menit", label: "Refleksi 90 Menit" },
@@ -420,6 +425,7 @@ const TransaksiPage = () => {
           <div>
             <Label>Status</Label>
             <Select
+              onChange={() => console.log("status")}
               options={[
                 { value: "Selesai", label: "Selesai" },
                 { value: "Proses", label: "Proses" },
@@ -433,9 +439,7 @@ const TransaksiPage = () => {
             <Button size="sm" variant="outline" onClick={closeModal}>
               Batal
             </Button>
-            <Button size="sm" type="submit">
-              Simpan
-            </Button>
+            <Button size="sm">Simpan</Button>
           </div>
         </form>
       </Modal>

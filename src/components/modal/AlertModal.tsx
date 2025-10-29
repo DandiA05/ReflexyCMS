@@ -175,6 +175,13 @@ const AlertModal: React.FC<AlertModalProps> = ({
   confirmText = "Okay",
   onConfirm,
 }) => {
+  const variantMap = {
+    success: "success",
+    info: "primary",
+    warning: "warning",
+    error: "danger", // ubah ke danger biar cocok sama Button
+  } as const;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -190,7 +197,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
         <div className="mt-6 flex justify-center">
           <Button
             size="sm"
-            variant={type.toString()}
+            variant={variantMap[type]}
             onClick={() => {
               onConfirm?.();
               onClose();
