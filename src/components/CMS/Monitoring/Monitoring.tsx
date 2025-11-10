@@ -1,23 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import Badge from "@/components/ui/badge/Badge";
+
 import { transaksiList } from "./Data";
 import DatePicker from "@/components/form/date-picker";
 import Label from "../../form/Label";
 import Select from "../../form/Select";
-import { PlusIcon, ChevronDownIcon } from "@/icons";
 import Button from "../../ui/button/Button";
 import { Modal } from "../../ui/modal";
-import Pagination from "../../tables/Pagination";
 import AlertModal from "../../modal/AlertModal";
+import { ChevronDownIcon } from "@/icons";
 
 const Index = () => {
   const [filters, setFilters] = useState({
@@ -32,7 +24,7 @@ const Index = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenAlert, setIsOpenAlert] = useState(false);
 
-  const openModal = () => setIsOpen(true);
+  // const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -47,8 +39,8 @@ const Index = () => {
   ];
 
   // --- Pagination Logic ---
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [itemsPerPage, setItemsPerPage] = useState(10);
+  // const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = transaksiList.filter((trx) => {
     const matchLayanan = filters.layanan
@@ -62,16 +54,16 @@ const Index = () => {
     return matchLayanan && matchStatus && matchTanggal;
   });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  // // const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  // const startIndex = (currentPage - 1) * itemsPerPage;
+  // // const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleItemsPerPageChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1);
-  };
+  // const handleItemsPerPageChange = (
+  //   e: React.ChangeEvent<HTMLSelectElement>,
+  // ) => {
+  //   setItemsPerPage(Number(e.target.value));
+  //   setCurrentPage(1);
+  // };
 
   const handleReset = () => {
     setFilters({ layanan: "", status: "", startDate: "", endDate: "" });

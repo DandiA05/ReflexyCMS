@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -27,8 +27,8 @@ const TransaksiPage = () => {
     endDate: "",
   });
 
-  const [totalTransaksi, setTotalTransaksi] = useState(0);
-  const [totalPendapatan, setTotalPendapatan] = useState(0);
+  // const [totalTransaksi, setTotalTransaksi] = useState(0);
+  // const [totalPendapatan, setTotalPendapatan] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenAlert, setIsOpenAlert] = useState(false);
 
@@ -41,12 +41,12 @@ const TransaksiPage = () => {
     closeModal();
   };
 
-  const investorData = [
-    { name: "Investor 1", percent: 35 },
-    { name: "Investor 2", percent: 25 },
-    { name: "Investor 3", percent: 25 },
-    { name: "Operasional", percent: 15 },
-  ];
+  // const investorData = [
+  //   { name: "Investor 1", percent: 35 },
+  //   { name: "Investor 2", percent: 25 },
+  //   { name: "Investor 3", percent: 25 },
+  //   { name: "Operasional", percent: 15 },
+  // ];
 
   // --- Pagination Logic ---
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -79,12 +79,12 @@ const TransaksiPage = () => {
     setFilters({ layanan: "", status: "", startDate: "", endDate: "" });
   };
 
-  useEffect(() => {
-    const total = filteredData.length;
-    const pendapatan = filteredData.reduce((sum, t) => sum + t.harga, 0);
-    setTotalTransaksi(total);
-    setTotalPendapatan(pendapatan);
-  }, [filteredData]);
+  // useEffect(() => {
+  //   const total = filteredData.length;
+  //   const pendapatan = filteredData.reduce((sum, t) => sum + t.harga, 0);
+  //   setTotalTransaksi(total);
+  //   setTotalPendapatan(pendapatan);
+  // }, [filteredData]);
 
   return (
     <div className="">
