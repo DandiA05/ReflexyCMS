@@ -1,15 +1,15 @@
-import TransaksiPage from "@/components/CMS/transaksi/Transaksi";
+import RealisasiPengeluaranPage from "@/components/CMS/Pengeluaran/Index";
 import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Transaksi",
+  title: "Pengeluaran",
   
 };
 export default function page() {
   return (
     <div>
-      <TransaksiPage />
+      <RealisasiPengeluaranPage />
     </div>
   );
 }

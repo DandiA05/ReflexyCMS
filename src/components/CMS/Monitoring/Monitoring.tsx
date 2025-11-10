@@ -11,15 +11,15 @@ import {
 import Badge from "@/components/ui/badge/Badge";
 import { transaksiList } from "./Data";
 import DatePicker from "@/components/form/date-picker";
-import Label from "../form/Label";
-import Select from "../form/Select";
+import Label from "../../form/Label";
+import Select from "../../form/Select";
 import { PlusIcon, ChevronDownIcon } from "@/icons";
-import Button from "../ui/button/Button";
-import { Modal } from "../ui/modal";
-import Pagination from "../tables/Pagination";
-import AlertModal from "../modal/AlertModal";
+import Button from "../../ui/button/Button";
+import { Modal } from "../../ui/modal";
+import Pagination from "../../tables/Pagination";
+import AlertModal from "../../modal/AlertModal";
 
-const TransaksiPage = () => {
+const Index = () => {
   const [filters, setFilters] = useState({
     layanan: "",
     status: "",
@@ -42,10 +42,8 @@ const TransaksiPage = () => {
   };
 
   const investorData = [
-    { name: "Investor 1", percent: 35 },
-    { name: "Investor 2", percent: 25 },
-    { name: "Investor 3", percent: 25 },
-    { name: "Operasional", percent: 15 },
+    { name: "Investor 1", percent: 10 },
+    { name: "Investor 2", percent: 90 },
   ];
 
   // --- Pagination Logic ---
@@ -91,39 +89,6 @@ const TransaksiPage = () => {
       <h1 className="mb-6 text-2xl font-semibold text-gray-800 dark:text-white">
         Monitoring Transaksi
       </h1>
-
-      {/* Summary Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Total Transaksi</p>
-          <p className="text-2xl font-semibold text-black dark:text-white">
-            {totalTransaksi}
-          </p>
-        </div>
-        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Total Pendapatan</p>
-          <p className="text-2xl font-semibold text-green-600">
-            Rp {totalPendapatan.toLocaleString("id-ID")}
-          </p>
-        </div>
-      </div>
-
-      {/* Investor Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {investorData.map((inv) => (
-          <div
-            key={inv.name}
-            className="rounded-xl bg-white p-5 shadow dark:bg-gray-800"
-          >
-            <p className="text-sm text-gray-500">{inv.name}</p>
-            <p className="text-xl font-semibold text-black dark:text-white">
-              Rp{" "}
-              {((inv.percent / 100) * totalPendapatan).toLocaleString("id-ID")}
-            </p>
-            <p className="text-xs text-gray-400">{inv.percent}% dari total</p>
-          </div>
-        ))}
-      </div>
 
       {/* 🔍 Filter Card */}
       <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
@@ -203,9 +168,55 @@ const TransaksiPage = () => {
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Total Transaksi</p>
+          <p className="text-2xl font-semibold text-black dark:text-white">
+            {totalTransaksi}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Total Pendapatan</p>
+          <p className="text-2xl font-semibold text-green-600">
+            Rp {totalPendapatan.toLocaleString("id-ID")}
+          </p>
+        </div>
+      </div>
+
+      {/* Investor Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {investorData.map((inv) => (
+          <div
+            key={inv.name}
+            className="rounded-xl bg-white p-5 shadow dark:bg-gray-800"
+          >
+            <p className="text-sm text-gray-500">{inv.name}</p>
+            <p className="text-xl font-semibold text-black dark:text-white">
+              Rp{" "}
+              {((inv.percent / 100) * totalPendapatan).toLocaleString("id-ID")}
+            </p>
+            <p className="text-xs text-gray-400">{inv.percent}% dari total</p>
+          </div>
+        ))}
+
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Overhead Cost (Proyeksi)</p>
+          <p className="text-xl font-semibold text-black dark:text-white">
+            Rp {(3000000).toLocaleString("id-ID")}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Overhead Cost (Realisasi)</p>
+          <p className="text-xl font-semibold text-black dark:text-white">
+            Rp {(2500000).toLocaleString("id-ID")}
+          </p>
+        </div>
+      </div>
+
       {/* Table Transaksi + Pagination (tetap sama seperti sebelumnya) */}
       {/* ... */}
-      <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
+      {/* <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/[0.05]">
           <div className="flex items-center gap-2">
             <label htmlFor="limit" className="text-sm text-gray-600">
@@ -340,7 +351,6 @@ const TransaksiPage = () => {
           </div>
         </div>
 
-        {/* Pagination */}
         <div className="flex flex-col border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/[0.05]">
           <p className="hidden text-sm text-gray-500 sm:block dark:text-gray-400">
             Menampilkan {startIndex + 1} -{" "}
@@ -356,7 +366,7 @@ const TransaksiPage = () => {
             />
           </div>
         </div>
-      </div>
+      </div> */}
 
       <Modal
         isOpen={isOpen}
@@ -457,4 +467,4 @@ const TransaksiPage = () => {
   );
 };
 
-export default TransaksiPage;
+export default Index;

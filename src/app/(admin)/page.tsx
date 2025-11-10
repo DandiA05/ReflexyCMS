@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import TransaksiPage from "@/components/transaksi/Transaksi";
+import TransaksiPage from "@/components/CMS/transaksi/Transaksi";
 
 export const metadata: Metadata = {
   title:
