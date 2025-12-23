@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -11,28 +11,61 @@ import {
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
+import Input from "@/components/form/input/InputField";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
 import Pagination from "@/components/tables/Pagination";
+import axiosInstance from "@/lib/axios";
 
 interface Layanan {
-  id: number;
-  nama: string;
-  harga: number;
+  id: string;
+  name: string;
+  description: string;
+  price: string | number; // Handling both potential formats
+  category: string;
+  duration: number;
+  active: boolean;
 }
 
 const MasterLayananPage = () => {
-  const [layananList, setLayananList] = useState<Layanan[]>([
-    { id: 1, nama: "Refleksi 60 Menit", harga: 80000 },
-    { id: 2, nama: "Refleksi 90 Menit", harga: 120000 },
-  ]);
-
+  const [layananList, setLayananList] = useState<Layanan[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Modal State
   const [isOpen, setIsOpen] = useState(false);
-  const [newLayanan, setNewLayanan] = useState({ nama: "", harga: "" });
+  const [modalType, setModalType] = useState<"create" | "edit">("create");
+  const [currentId, setCurrentId] = useState<string | null>(null);
 
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    category: "Hair", // Default category
+    duration: "",
+  });
+
+  // Pagination State (Client-side for now based on API response)
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(layananList.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.get("/services");
+      // Assuming response.data is { data: [...], total: ... } as per requirement
+      setLayananList(response.data.data || []); 
+    } catch (err) {
+      console.error("Failed to fetch services", err);
+      setError("Gagal mengambil data layanan.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleItemsPerPageChange = (
     e: React.ChangeEvent<HTMLSelectElement>,
@@ -41,29 +74,82 @@ const MasterLayananPage = () => {
     setCurrentPage(1);
   };
 
-  const openModal = () => setIsOpen(true);
+  const openModal = (type: "create" | "edit", data?: Layanan) => {
+    setModalType(type);
+    if (type === "edit" && data) {
+      setCurrentId(data.id);
+      setFormData({
+        name: data.name,
+        description: data.description || "",
+        price: data.price.toString(),
+        category: data.category || "Hair",
+        duration: data.duration?.toString() || "",
+      });
+    } else {
+      setCurrentId(null);
+      setFormData({
+        name: "",
+        description: "",
+        price: "",
+        category: "Hair",
+        duration: "",
+      });
+    }
+    setIsOpen(true);
+  };
+
   const closeModal = () => {
     setIsOpen(false);
-    setNewLayanan({ nama: "", harga: "" });
+    setError("");
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLayanan.nama || !newLayanan.harga) return;
-    const newItem: Layanan = {
-      id: layananList.length + 1,
-      nama: newLayanan.nama,
-      harga: Number(newLayanan.harga),
+    setIsLoading(true);
+    
+    // Convert types for payload
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      price: Number(formData.price),
+      category: formData.category,
+      duration: Number(formData.duration),
     };
-    setLayananList([...layananList, newItem]);
-    closeModal();
-  };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Yakin hapus layanan ini?")) {
-      setLayananList(layananList.filter((l) => l.id !== id));
+    try {
+      if (modalType === "create") {
+        await axiosInstance.post("/services", payload);
+      } else if (modalType === "edit" && currentId) {
+        await axiosInstance.put(`/services/${currentId}`, payload);
+      }
+      
+      // Refresh data
+      await fetchServices();
+      closeModal();
+    } catch (err: any) {
+      console.error("Error saving service", err);
+      setError(err.response?.data?.message || "Gagal menyimpan layanan.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Yakin hapus layanan ini?")) {
+      try {
+        await axiosInstance.delete(`/services/${id}`);
+        fetchServices();
+      } catch (err) {
+        console.error("Error deleting service", err);
+        alert("Gagal menghapus layanan.");
+      }
+    }
+  };
+
+  // Pagination Logic
+  const totalPages = Math.ceil(layananList.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentData = layananList.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div>
@@ -94,7 +180,7 @@ const MasterLayananPage = () => {
             size="sm"
             variant="primary"
             startIcon={<PlusIcon />}
-            onClick={openModal}
+            onClick={() => openModal("create")}
           >
             Tambah
           </Button>
@@ -106,70 +192,69 @@ const MasterLayananPage = () => {
             <Table className="hover">
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
-                  <TableCell
-                    isHeader
-                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
-                  >
-                    No
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
-                  >
-                    Layanan
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
-                  >
-                    Harga
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="text-theme-xs px-4 py-3 text-center font-medium text-gray-500"
-                  >
-                    Action
-                  </TableCell>
+                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">No</TableCell>
+                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Layanan</TableCell>
+                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Kategori</TableCell>
+                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Durasi</TableCell>
+                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Harga</TableCell>
+                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-center text-theme-xs">Action</TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {layananList.map((item, index) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
-                      {index + 1}
-                    </TableCell>
-                    <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
-                      {item.nama}
-                    </TableCell>
-                    <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
-                      Rp {item.harga.toLocaleString("id-ID")}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          size="xs"
-                          variant="warning"
-                          startIcon={<PencilIcon />}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="danger"
-                          startIcon={<TrashBinIcon />}
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          Hapus
-                        </Button>
-                      </div>
+                {isLoading && layananList.length === 0 ? (
+                   <TableRow>
+                    <TableCell colSpan={6} className="py-6 text-center text-gray-500">
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))}
-                {layananList.length === 0 && (
+                ) : (
+                  currentData.map((item, index) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                        {startIndex + index + 1}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                        <div className="font-medium text-gray-800 dark:text-white/90">{item.name}</div>
+                        <div className="text-xs text-gray-400">{item.description}</div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                        {item.category}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                        {item.duration} Menit
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                        Rp {Number(item.price).toLocaleString("id-ID")}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center items-center gap-2">
+                          <Button
+                            size="xs"
+                            variant="warning"
+                            startIcon={<PencilIcon />}
+                            onClick={() => openModal("edit", item)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="danger"
+                            startIcon={<TrashBinIcon />}
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            Hapus
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+                
+                {!isLoading && layananList.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={6}
                       className="py-6 text-center text-gray-500"
                     >
                       Tidak ada data layanan
@@ -199,51 +284,92 @@ const MasterLayananPage = () => {
         </div>
       </div>
 
-      {/* Modal Tambah Layanan */}
+      {/* Modal Tambah/Edit Layanan */}
       <Modal
         isOpen={isOpen}
         onClose={closeModal}
         className="max-w-[500px] p-6 lg:p-8"
       >
         <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white">
-          Tambah Layanan
+          {modalType === "create" ? "Tambah Layanan" : "Edit Layanan"}
         </h4>
 
         <form onSubmit={handleSave} className="grid gap-4">
           <div>
             <Label>Nama Layanan</Label>
-            <input
+            <Input
               type="text"
-              value={newLayanan.nama}
+              value={formData.name}
               onChange={(e) =>
-                setNewLayanan({ ...newLayanan, nama: e.target.value })
+                setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white"
-              placeholder="Masukkan nama layanan"
+              placeholder="Contoh: Haircut Premium"
               required
             />
           </div>
 
           <div>
-            <Label>Harga</Label>
-            <input
-              type="number"
-              value={newLayanan.harga}
+             <Label>Kategori</Label>
+             <select
+                className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+             >
+               <option value="Hair">Hair</option>
+               <option value="Face">Face</option>
+               <option value="Nails">Nails</option>
+               <option value="Body">Body</option>
+               <option value="Other">Other</option>
+             </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Harga (Rp)</Label>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
+                placeholder="0"
+                required
+              />
+            </div>
+            <div>
+              <Label>Durasi (Menit)</Label>
+              <Input
+                type="number"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData({ ...formData, duration: e.target.value })
+                }
+                placeholder="60"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Deskripsi</Label>
+            <textarea
+              className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 min-h-[80px] focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10"
+              value={formData.description}
               onChange={(e) =>
-                setNewLayanan({ ...newLayanan, harga: e.target.value })
+                setFormData({ ...formData, description: e.target.value })
               }
-              className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white"
-              placeholder="Masukkan harga"
-              required
+              placeholder="Deskripsi layanan..."
             />
           </div>
 
+          {error && <p className="text-sm text-error-500">{error}</p>}
+
           <div className="mt-6 flex justify-end gap-3">
-            <Button size="sm" variant="outline" onClick={closeModal}>
+            <Button size="sm" variant="outline" onClick={closeModal} type="button">
               Batal
             </Button>
-            <Button size="sm" variant="primary">
-              Simpan
+            <Button size="sm" variant="primary" type="submit" disabled={isLoading}>
+              {isLoading ? "Menyimpan..." : "Simpan"}
             </Button>
           </div>
         </form>

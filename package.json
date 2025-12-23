@@ -21,6 +21,7 @@
     "@tailwindcss/postcss": "^4.0.9",
     "apexcharts": "^4.3.0",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.13.2",
     "flatpickr": "^4.6.13",
     "next": "15.2.3",
     "react": "^19.0.0",
@@ -30,7 +31,8 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.5",
     "swiper": "^11.2.0",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
