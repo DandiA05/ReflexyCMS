@@ -28,4 +28,20 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+// Add a response interceptor
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== "undefined") {
+        // Dispatch custom event for 401 errors
+        window.dispatchEvent(new CustomEvent("session-expired"));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosInstance;

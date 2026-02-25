@@ -10,6 +10,7 @@ import Button from "../../ui/button/Button";
 import { Modal } from "../../ui/modal";
 import AlertModal from "../../modal/AlertModal";
 import { ChevronDownIcon } from "@/icons";
+import axiosInstance from "@/lib/axios";
 
 const Index = () => {
   const [filters, setFilters] = useState({
@@ -19,12 +20,33 @@ const Index = () => {
     endDate: "",
   });
 
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [totalTransaksi, setTotalTransaksi] = useState(0);
   const [totalPendapatan, setTotalPendapatan] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenAlert, setIsOpenAlert] = useState(false);
 
-  // const openModal = () => setIsOpen(true);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get("monitoring/dashboard");
+      setDashboardData(response.data.data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -70,11 +92,13 @@ const Index = () => {
   };
 
   useEffect(() => {
-    const total = filteredData.length;
-    const pendapatan = filteredData.reduce((sum, t) => sum + t.harga, 0);
-    setTotalTransaksi(total);
-    setTotalPendapatan(pendapatan);
-  }, [filteredData]);
+    if (dashboardData) {
+      // Logic for filtered data if still needed, 
+      // but typical dashboard shows overall stats
+      setTotalTransaksi(dashboardData.monthTransactions);
+      setTotalPendapatan(dashboardData.monthRevenue);
+    }
+  }, [dashboardData]);
 
   return (
     <div className="">
@@ -163,46 +187,63 @@ const Index = () => {
       {/* Summary Cards */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Total Transaksi</p>
+          <p className="text-sm text-gray-500">Total Transaksi (Bulan Ini)</p>
           <p className="text-2xl font-semibold text-black dark:text-white">
-            {totalTransaksi}
+            {loading ? "..." : dashboardData?.monthTransactions || 0}
           </p>
         </div>
         <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Total Pendapatan</p>
+          <p className="text-sm text-gray-500">Total Pendapatan (Bulan Ini)</p>
           <p className="text-2xl font-semibold text-green-600">
-            Rp {totalPendapatan.toLocaleString("id-ID")}
+            Rp {loading ? "..." : (dashboardData?.monthRevenue || 0).toLocaleString("id-ID")}
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Transaksi Hari Ini</p>
+          <p className="text-2xl font-semibold text-black dark:text-white">
+            {loading ? "..." : dashboardData?.todayTransactions || 0}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Pendapatan Hari Ini</p>
+          <p className="text-2xl font-semibold text-green-600">
+            Rp {loading ? "..." : (dashboardData?.todayRevenue || 0).toLocaleString("id-ID")}
           </p>
         </div>
       </div>
 
       {/* Investor Cards */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {investorData.map((inv) => (
-          <div
-            key={inv.name}
-            className="rounded-xl bg-white p-5 shadow dark:bg-gray-800"
-          >
-            <p className="text-sm text-gray-500">{inv.name}</p>
-            <p className="text-xl font-semibold text-black dark:text-white">
-              Rp{" "}
-              {((inv.percent / 100) * totalPendapatan).toLocaleString("id-ID")}
-            </p>
-            <p className="text-xs text-gray-400">{inv.percent}% dari total</p>
-          </div>
-        ))}
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Investor 1</p>
+          <p className="text-xl font-semibold text-black dark:text-white">
+            Rp {loading ? "..." : (dashboardData?.investor1Revenue || 0).toLocaleString("id-ID")}
+          </p>
+          <p className="text-xs text-gray-400">Profit Sharing</p>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
+          <p className="text-sm text-gray-500">Investor 2</p>
+          <p className="text-xl font-semibold text-black dark:text-white">
+            Rp {loading ? "..." : (dashboardData?.investor2Revenue || 0).toLocaleString("id-ID")}
+          </p>
+          <p className="text-xs text-gray-400">Profit Sharing</p>
+        </div>
 
         <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Overhead Cost (Proyeksi)</p>
+          <p className="text-sm text-gray-500">Overhead Cost (Bulan Ini)</p>
           <p className="text-xl font-semibold text-black dark:text-white">
-            Rp {(3000000).toLocaleString("id-ID")}
+            Rp {loading ? "..." : (dashboardData?.monthOverhead || 0).toLocaleString("id-ID")}
           </p>
         </div>
         <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Overhead Cost (Realisasi)</p>
-          <p className="text-xl font-semibold text-black dark:text-white">
-            Rp {(2500000).toLocaleString("id-ID")}
+          <p className="text-sm text-gray-500">Profit (Bulan Ini)</p>
+          <p className="text-xl font-semibold text-blue-600">
+            Rp {loading ? "..." : (dashboardData?.monthProfit || 0).toLocaleString("id-ID")}
           </p>
+          <p className="text-xs text-gray-400">Margin: {dashboardData?.profitMargin || 0}%</p>
         </div>
       </div>
 

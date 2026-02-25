@@ -25,13 +25,14 @@ interface Karyawan {
   salary: string | number;
   joinDate?: string;
   active: boolean;
+  commissionPercentage?: number;
 }
 
 const MasterKaryawanPage = () => {
   const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Modal State
   const [isOpen, setIsOpen] = useState(false);
   const [modalType, setModalType] = useState<"create" | "edit">("create");
@@ -44,6 +45,7 @@ const MasterKaryawanPage = () => {
     phone: "",
     position: "Kasir",
     salary: "",
+    commissionPercentage: "",
   });
 
   // Pagination State
@@ -58,7 +60,7 @@ const MasterKaryawanPage = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.get("/employees");
-      setKaryawanList(response.data.data || []); 
+      setKaryawanList(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch employees", err);
       setError("Gagal mengambil data karyawan.");
@@ -84,6 +86,7 @@ const MasterKaryawanPage = () => {
         phone: data.phone,
         position: data.position,
         salary: data.salary.toString(),
+        commissionPercentage: data.commissionPercentage?.toString() || "",
       });
     } else {
       setCurrentId(null);
@@ -93,6 +96,7 @@ const MasterKaryawanPage = () => {
         phone: "",
         position: "Kasir",
         salary: "",
+        commissionPercentage: "",
       });
     }
     setIsOpen(true);
@@ -106,13 +110,14 @@ const MasterKaryawanPage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const payload = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
       position: formData.position,
       salary: Number(formData.salary),
+      commissionPercentage: Number(formData.commissionPercentage),
     };
 
     try {
@@ -121,7 +126,7 @@ const MasterKaryawanPage = () => {
       } else if (modalType === "edit" && currentId) {
         await axiosInstance.put(`/employees/${currentId}`, payload);
       }
-      
+
       await fetchEmployees();
       closeModal();
     } catch (err: any) {
@@ -156,7 +161,7 @@ const MasterKaryawanPage = () => {
 
       <div className="rounded-xl bg-white p-6 shadow dark:bg-gray-800">
         <div className="flex items-center justify-between border-b border-gray-100 pb-4 dark:border-white/[0.05]">
-           <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <label htmlFor="limit" className="text-sm text-gray-600">
               Tampilkan:
             </label>
@@ -171,7 +176,7 @@ const MasterKaryawanPage = () => {
               <option value={15}>15</option>
             </select>
           </div>
-          
+
           <Button
             size="sm"
             variant="primary"
@@ -187,43 +192,89 @@ const MasterKaryawanPage = () => {
             <Table className="hover">
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
-                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">No</TableCell>
-                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Karyawan</TableCell>
-                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Kontak</TableCell>
-                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Posisi</TableCell>
-                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Gaji</TableCell>
-                  <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-center text-theme-xs">Action</TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    No
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Karyawan
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Kontak
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Posisi
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Gaji
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Komisi
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="text-theme-xs px-4 py-3 text-center font-medium text-gray-500"
+                  >
+                    Action
+                  </TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {isLoading && karyawanList.length === 0 ? (
-                   <TableRow>
-                    <TableCell colSpan={6} className="py-6 text-center text-gray-500">
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="py-6 text-center text-gray-500"
+                    >
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : (
                   currentData.map((item, index) => (
                     <TableRow key={item.id}>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
                         {startIndex + index + 1}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
-                        <div className="font-medium text-gray-800 dark:text-white/90">{item.name}</div>
-                        <div className="text-xs text-gray-400">{item.email}</div>
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
+                        <div className="font-medium text-gray-800 dark:text-white/90">
+                          {item.name}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {item.email}
+                        </div>
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
                         {item.phone}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
                         {item.position}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
                         Rp {Number(item.salary).toLocaleString("id-ID")}
                       </TableCell>
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
+                        {item.commissionPercentage || 0}%
+                      </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex justify-center items-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
                           <Button
                             size="xs"
                             variant="warning"
@@ -245,11 +296,11 @@ const MasterKaryawanPage = () => {
                     </TableRow>
                   ))
                 )}
-                
+
                 {!isLoading && karyawanList.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="py-6 text-center text-gray-500"
                     >
                       Tidak ada data karyawan
@@ -353,13 +404,39 @@ const MasterKaryawanPage = () => {
             />
           </div>
 
-          {error && <p className="text-sm text-error-500">{error}</p>}
+          <div>
+            <Label>Komisi (%)</Label>
+            <Input
+              type="number"
+              value={formData.commissionPercentage}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  commissionPercentage: e.target.value,
+                })
+              }
+              placeholder="0"
+              required
+            />
+          </div>
+
+          {error && <p className="text-error-500 text-sm">{error}</p>}
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button size="sm" variant="outline" onClick={closeModal} type="button">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={closeModal}
+              type="button"
+            >
               Batal
             </Button>
-            <Button size="sm" variant="primary" type="submit" disabled={isLoading}>
+            <Button
+              size="sm"
+              variant="primary"
+              type="submit"
+              disabled={isLoading}
+            >
               {isLoading ? "Menyimpan..." : "Simpan"}
             </Button>
           </div>

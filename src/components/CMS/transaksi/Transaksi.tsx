@@ -63,12 +63,18 @@ interface Transaction {
     name: string;
     phone: string;
   };
+  employee?: {
+    id: string;
+    name: string;
+  };
+  commissionAmount?: number;
 }
 
 const TransaksiPage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [filters, setFilters] = useState({
     customerId: "",
+    employeeId: "",
     status: "",
     startDate: "",
     endDate: "",
@@ -78,8 +84,7 @@ const TransaksiPage = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  
-  const [totalAmount, setTotalAmount] = useState(0);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenAlert, setIsOpenAlert] = useState(false);
@@ -120,7 +125,7 @@ const TransaksiPage = () => {
       const [custRes, empRes, servRes] = await Promise.all([
         axiosInstance.get("/customers"),
         axiosInstance.get("/employees"),
-        axiosInstance.get("/services")
+        axiosInstance.get("/services"),
       ]);
       setCustomers(custRes.data.data || []);
       setEmployees(empRes.data.data || []);
@@ -137,9 +142,12 @@ const TransaksiPage = () => {
       if (filters.startDate) params.append("startDate", filters.startDate);
       if (filters.endDate) params.append("endDate", filters.endDate);
       if (filters.customerId) params.append("customerId", filters.customerId);
+      if (filters.employeeId) params.append("employeeId", filters.employeeId);
       if (filters.status) params.append("status", filters.status);
 
-      const response = await axiosInstance.get(`/transactions?${params.toString()}`);
+      const response = await axiosInstance.get(
+        `/transactions?${params.toString()}`,
+      );
       setTransactions(response.data.data || []);
       setSummaryTotal(response.data.total || 0);
     } catch (err) {
@@ -160,12 +168,14 @@ const TransaksiPage = () => {
         status: data.status,
         notes: data.notes || "",
       });
-      setItems(data.items.map(item => ({
-        serviceId: item.serviceId,
-        serviceName: item.serviceName,
-        price: Number(item.price),
-        quantity: item.quantity
-      })));
+      setItems(
+        data.items.map((item) => ({
+          serviceId: item.serviceId,
+          serviceName: item.serviceName,
+          price: Number(item.price),
+          quantity: item.quantity,
+        })),
+      );
     } else {
       setCurrentId(null);
       setFormData({
@@ -185,23 +195,30 @@ const TransaksiPage = () => {
   };
 
   const addItem = () => {
-    setItems([...items, { serviceId: "", serviceName: "", price: 0, quantity: 1 }]);
+    setItems([
+      ...items,
+      { serviceId: "", serviceName: "", price: 0, quantity: 1 },
+    ]);
   };
 
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, field: keyof TransactionItem, value: any) => {
+  const handleItemChange = (
+    index: number,
+    field: keyof TransactionItem,
+    value: any,
+  ) => {
     const newItems = [...items];
     if (field === "serviceId") {
-      const service = services.find(s => s.id === value);
+      const service = services.find((s) => s.id === value);
       if (service) {
         newItems[index] = {
           ...newItems[index],
           serviceId: value,
           serviceName: service.name,
-          price: Number(service.price)
+          price: Number(service.price),
         };
       }
     } else {
@@ -211,7 +228,7 @@ const TransaksiPage = () => {
   };
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -226,7 +243,7 @@ const TransaksiPage = () => {
       subtotal,
       tax,
       total,
-      items: items.filter(item => item.serviceId !== "")
+      items: items.filter((item) => item.serviceId !== ""),
     };
 
     try {
@@ -260,13 +277,37 @@ const TransaksiPage = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = transactions.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1);
   };
 
+  // --- Commission Summary Logic ---
+  const commissionSummary = transactions.reduce(
+    (acc, trx) => {
+      if (trx.employee && trx.commissionAmount) {
+        const empId = trx.employee.id;
+        if (!acc[empId]) {
+          acc[empId] = { name: trx.employee.name, total: 0, count: 0 };
+        }
+        acc[empId].total += Number(trx.commissionAmount);
+        acc[empId].count += 1;
+      }
+      return acc;
+    },
+    {} as Record<string, { name: string; total: number; count: number }>,
+  );
+
   const handleReset = () => {
-    setFilters({ customerId: "", status: "", startDate: "", endDate: "" });
+    setFilters({
+      customerId: "",
+      employeeId: "",
+      status: "",
+      startDate: "",
+      endDate: "",
+    });
   };
 
   if (!isMounted) return null;
@@ -288,9 +329,28 @@ const TransaksiPage = () => {
             <div className="relative">
               <Select
                 value={filters.customerId}
-                options={customers.map(c => ({ value: c.id, label: c.name }))}
+                options={customers.map((c) => ({ value: c.id, label: c.name }))}
                 placeholder="Semua Pelanggan"
-                onChange={(value) => setFilters({ ...filters, customerId: value })}
+                onChange={(value) =>
+                  setFilters({ ...filters, customerId: value })
+                }
+                className="dark:bg-dark-900"
+              />
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                <ChevronDownIcon />
+              </span>
+            </div>
+          </div>
+          <div>
+            <Label>Therapist</Label>
+            <div className="relative">
+              <Select
+                value={filters.employeeId}
+                options={employees.map((e) => ({ value: e.id, label: e.name }))}
+                placeholder="Semua Therapist"
+                onChange={(value) =>
+                  setFilters({ ...filters, employeeId: value })
+                }
                 className="dark:bg-dark-900"
               />
               <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -359,7 +419,9 @@ const TransaksiPage = () => {
           </p>
         </div>
         <div className="rounded-xl bg-white p-5 shadow dark:bg-gray-800">
-          <p className="text-sm text-gray-500">Total Pendapatan (Periode Ini)</p>
+          <p className="text-sm text-gray-500">
+            Total Pendapatan (Periode Ini)
+          </p>
           <p className="text-2xl font-semibold text-green-600">
             Rp {summaryTotal.toLocaleString("id-ID")}
           </p>
@@ -379,9 +441,11 @@ const TransaksiPage = () => {
               onChange={handleItemsPerPageChange}
               className="rounded-md border border-gray-300 px-2 py-1 text-sm dark:bg-gray-800 dark:text-white"
             >
-              <option value={5}>5</option>
               <option value={10}>10</option>
-              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={99999}>All</option>
             </select>
           </div>
 
@@ -400,33 +464,117 @@ const TransaksiPage = () => {
             <Table className="hover">
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">No</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">Nomor TRX</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">Pelanggan</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">Tanggal</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">Subtotal</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">Pajak</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-end font-medium text-gray-500">Total</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start font-medium text-gray-500">Status</TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-center font-medium text-gray-500">Action</TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    No
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Nomor TRX
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Pelanggan
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Therapist
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-end font-medium text-gray-500"
+                  >
+                    Komisi
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Tanggal
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Subtotal
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Pajak
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-end font-medium text-gray-500"
+                  >
+                    Total
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
+                  >
+                    Status
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-center font-medium text-gray-500"
+                  >
+                    Action
+                  </TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {currentData.map((trx, index) => (
                   <TableRow key={trx.id}>
-                    <TableCell className="px-4 py-3 text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}.</TableCell>
-                    <TableCell className="px-4 py-3 font-medium text-gray-800 dark:text-white">{trx.transactionNumber}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500">{trx.customer?.name}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500">{new Date(trx.createdAt).toLocaleDateString("id-ID")}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500">Rp {Number(trx.subtotal).toLocaleString("id-ID")}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500">Rp {Number(trx.tax).toLocaleString("id-ID")}</TableCell>
-                    <TableCell className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">Rp {Number(trx.total).toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      {(currentPage - 1) * itemsPerPage + index + 1}.
+                    </TableCell>
+                    <TableCell className="px-4 py-3 font-medium text-gray-800 dark:text-white">
+                      {trx.transactionNumber}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      {trx.customer?.name}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      {trx.employee?.name || "-"}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">
+                      Rp{" "}
+                      {Number(trx.commissionAmount || 0).toLocaleString(
+                        "id-ID",
+                      )}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      {new Date(trx.createdAt).toLocaleDateString("id-ID")}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      Rp {Number(trx.subtotal).toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      Rp {Number(trx.tax).toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
+                      Rp {Number(trx.total).toLocaleString("id-ID")}
+                    </TableCell>
                     <TableCell className="px-4 py-3">
                       <Badge
                         size="sm"
                         color={
-                          trx.status === "completed" ? "success" : trx.status === "pending" ? "warning" : "error"
+                          trx.status === "completed"
+                            ? "success"
+                            : trx.status === "pending"
+                              ? "warning"
+                              : "error"
                         }
                       >
                         {trx.status.toUpperCase()}
@@ -434,8 +582,21 @@ const TransaksiPage = () => {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                         <Button size="xs" variant="outline" onClick={() => openModal("edit", trx)}>Edit</Button>
-                         <Button size="xs" variant="danger" onClick={() => handleDelete(trx.id)}>Hapus</Button>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => openModal("edit", trx)}
+                          disabled={trx.status === "completed"}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="danger"
+                          onClick={() => handleDelete(trx.id)}
+                        >
+                          Hapus
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -448,7 +609,9 @@ const TransaksiPage = () => {
         {/* Pagination */}
         <div className="flex flex-col border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/[0.05]">
           <p className="hidden text-sm text-gray-500 sm:block dark:text-gray-400">
-            Menampilkan {startIndex + 1} - {Math.min(startIndex + itemsPerPage, transactions.length)} dari {transactions.length} data
+            Menampilkan {startIndex + 1} -{" "}
+            {Math.min(startIndex + itemsPerPage, transactions.length)} dari{" "}
+            {transactions.length} data
           </p>
           <div className="flex justify-end">
             <Pagination
@@ -460,7 +623,70 @@ const TransaksiPage = () => {
         </div>
       </div>
 
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[800px] p-6 lg:p-10 overflow-y-auto max-h-[90vh]">
+      {/* Commission Summary Table */}
+      <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
+        <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">
+          Ringkasan Komisi per Therapist
+        </h2>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start font-medium text-gray-500"
+                >
+                  Nama Therapist
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-center font-medium text-gray-500"
+                >
+                  Jumlah Transaksi
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-end font-medium text-gray-500"
+                >
+                  Total Komisi
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {Object.keys(commissionSummary).length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="py-6 text-center text-gray-500"
+                  >
+                    Belum ada data komisi
+                  </TableCell>
+                </TableRow>
+              ) : (
+                Object.values(commissionSummary).map((summary, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="px-4 py-3 font-medium text-gray-800 dark:text-white">
+                      {summary.name}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-center text-gray-500">
+                      {summary.count}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400">
+                      Rp {summary.total.toLocaleString("id-ID")}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        className="max-h-[90vh] max-w-[800px] overflow-y-auto p-6 lg:p-10"
+      >
         <h4 className="text-title-sm mb-7 font-semibold text-gray-800 dark:text-white/90">
           {modalType === "create" ? "Tambah Transaksi" : "Edit Transaksi"}
         </h4>
@@ -471,9 +697,11 @@ const TransaksiPage = () => {
               <Label>Pelanggan</Label>
               <Select
                 value={formData.customerId}
-                options={customers.map(c => ({ value: c.id, label: c.name }))}
+                options={customers.map((c) => ({ value: c.id, label: c.name }))}
                 placeholder="Pilih Pelanggan"
-                onChange={(val) => setFormData({ ...formData, customerId: val })}
+                onChange={(val) =>
+                  setFormData({ ...formData, customerId: val })
+                }
               />
             </div>
 
@@ -481,9 +709,11 @@ const TransaksiPage = () => {
               <Label>Therapist</Label>
               <Select
                 value={formData.employeeId}
-                options={employees.map(e => ({ value: e.id, label: e.name }))}
+                options={employees.map((e) => ({ value: e.id, label: e.name }))}
                 placeholder="Pilih Therapist"
-                onChange={(val) => setFormData({ ...formData, employeeId: val })}
+                onChange={(val) =>
+                  setFormData({ ...formData, employeeId: val })
+                }
               />
             </div>
 
@@ -496,7 +726,9 @@ const TransaksiPage = () => {
                   { value: "card", label: "Card" },
                   { value: "transfer", label: "Transfer" },
                 ]}
-                onChange={(val) => setFormData({ ...formData, paymentMethod: val })}
+                onChange={(val) =>
+                  setFormData({ ...formData, paymentMethod: val })
+                }
               />
             </div>
 
@@ -515,34 +747,68 @@ const TransaksiPage = () => {
           </div>
 
           <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-4">
-               <Label className="text-lg font-bold">Layanan / Item</Label>
-               <Button type="button" size="xs" variant="primary" onClick={addItem}>Add Service</Button>
+            <div className="mb-4 flex items-center justify-between">
+              <Label className="text-lg font-bold">Layanan / Item</Label>
+              <Button
+                type="button"
+                size="xs"
+                variant="primary"
+                onClick={addItem}
+              >
+                Add Service
+              </Button>
             </div>
-            
+
             <div className="space-y-3">
               {items.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-3 items-end border p-3 rounded-lg dark:border-gray-700">
+                <div
+                  key={index}
+                  className="grid grid-cols-12 items-end gap-3 rounded-lg border p-3 dark:border-gray-700"
+                >
                   <div className="col-span-6">
                     <Label>Layanan</Label>
                     <Select
                       value={item.serviceId.toString()}
-                      options={services.map(s => ({ value: s.id, label: s.name }))}
+                      options={services.map((s) => ({
+                        value: s.id,
+                        label: s.name,
+                      }))}
                       placeholder="Pilih Layanan"
-                      onChange={(val) => handleItemChange(index, "serviceId", val)}
+                      onChange={(val) =>
+                        handleItemChange(index, "serviceId", val)
+                      }
                     />
                   </div>
                   <div className="col-span-2">
                     <Label>Harga</Label>
-                    <Input value={item.price.toLocaleString("id-ID")} readOnly disabled />
+                    <Input
+                      value={item.price.toLocaleString("id-ID")}
+                      readOnly
+                      disabled
+                    />
                   </div>
                   <div className="col-span-2">
                     <Label>Qty</Label>
-                    <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, "quantity", Number(e.target.value))} />
+                    <Input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(
+                          index,
+                          "quantity",
+                          Number(e.target.value),
+                        )
+                      }
+                    />
                   </div>
                   <div className="col-span-2 pb-1">
-                    <Button type="button" variant="danger" className="w-full" onClick={() => removeItem(index)}>
-                       <TrashBinIcon />
+                    <Button
+                      type="button"
+                      variant="danger"
+                      className="w-full"
+                      onClick={() => removeItem(index)}
+                    >
+                      <TrashBinIcon />
                     </Button>
                   </div>
                 </div>
@@ -550,26 +816,39 @@ const TransaksiPage = () => {
             </div>
           </div>
 
-          <div className="border-t pt-4 flex flex-col items-end gap-2">
-             <div className="text-sm text-gray-500">Subtotal: Rp {calculateSubtotal().toLocaleString("id-ID")}</div>
-             <div className="text-sm text-gray-500">Pajak (11%): Rp {(calculateSubtotal() * 0.11).toLocaleString("id-ID")}</div>
-             <div className="text-xl font-bold text-gray-900 dark:text-white">Total: Rp {(calculateSubtotal() * 1.11).toLocaleString("id-ID")}</div>
+          <div className="flex flex-col items-end gap-2 border-t pt-4">
+            <div className="text-sm text-gray-500">
+              Subtotal: Rp {calculateSubtotal().toLocaleString("id-ID")}
+            </div>
+            <div className="text-sm text-gray-500">
+              Pajak (11%): Rp{" "}
+              {(calculateSubtotal() * 0.11).toLocaleString("id-ID")}
+            </div>
+            <div className="text-xl font-bold text-gray-900 dark:text-white">
+              Total: Rp {(calculateSubtotal() * 1.11).toLocaleString("id-ID")}
+            </div>
           </div>
 
           <div>
-             <Label>Catatan</Label>
-             <textarea 
-               className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700" 
-               rows={2}
-               value={formData.notes}
-               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-               placeholder="Catatan tambahan..."
-             />
+            <Label>Catatan</Label>
+            <textarea
+              className="w-full rounded-lg border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              rows={2}
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+              placeholder="Catatan tambahan..."
+            />
           </div>
 
           <div className="mt-8 flex w-full items-center justify-end gap-3">
-            <Button size="sm" variant="outline" onClick={closeModal}>Batal</Button>
-            <Button size="sm" type="submit" disabled={isLoading}>{isLoading ? "Saving..." : "Simpan Transaksi"}</Button>
+            <Button size="sm" variant="outline" onClick={closeModal}>
+              Batal
+            </Button>
+            <Button size="sm" type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Simpan Transaksi"}
+            </Button>
           </div>
         </form>
       </Modal>

@@ -20,7 +20,7 @@ interface OverheadCost {
   id: string;
   category: string;
   nominalProjection: string;
-  nominalActual: string | null;
+  nominalRealisasi: string | null;
   details: string;
   month: number;
   year: number;
@@ -41,7 +41,8 @@ const RealisasiPengeluaranPage = () => {
   // Helper for formatting
   const formatCurrency = (value: string | number) => {
     if (value === "" || value === undefined || value === null) return "";
-    const num = typeof value === "string" ? value.replace(/\D/g, "") : value.toString();
+    const num =
+      typeof value === "string" ? value.replace(/\D/g, "") : value.toString();
     if (num === "") return "";
     return Number(num).toLocaleString("id-ID");
   };
@@ -53,12 +54,12 @@ const RealisasiPengeluaranPage = () => {
   // Filters
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  
+
   // Data
   const [categories, setCategories] = useState<string[]>([]);
   const [costList, setCostList] = useState<OverheadCost[]>([]);
   const [summary, setSummary] = useState<ProjectionSummary | null>(null);
-  
+
   // UI State
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -70,7 +71,7 @@ const RealisasiPengeluaranPage = () => {
   const [formData, setFormData] = useState({
     category: "",
     nominalProjection: "",
-    nominalActual: "",
+    nominalRealisasi: "",
     details: "",
     notes: "",
   });
@@ -95,7 +96,7 @@ const RealisasiPengeluaranPage = () => {
   const fetchCategories = async () => {
     try {
       const response = await axiosInstance.get("/overhead-cost/categories");
-        setCategories(response.data.data || []);
+      setCategories(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch categories", err);
     }
@@ -106,12 +107,16 @@ const RealisasiPengeluaranPage = () => {
     setError("");
     try {
       const [listRes, summaryRes] = await Promise.all([
-        axiosInstance.get(`/overhead-cost?month=${selectedMonth}&year=${selectedYear}`),
-        axiosInstance.get(`/overhead-cost/projection/summary?month=${selectedMonth}&year=${selectedYear}`)
+        axiosInstance.get(
+          `/overhead-cost?month=${selectedMonth}&year=${selectedYear}`,
+        ),
+        axiosInstance.get(
+          `/overhead-cost/projection/summary?month=${selectedMonth}&year=${selectedYear}`,
+        ),
       ]);
-      
+
       setCostList(listRes.data.data || []);
-        setSummary(summaryRes.data.data ||[]);
+      setSummary(summaryRes.data.data || []);
     } catch (err) {
       console.error("Failed to fetch overhead data", err);
       setError("Gagal mengambil data pengeluaran.");
@@ -122,8 +127,8 @@ const RealisasiPengeluaranPage = () => {
 
   if (!isMounted) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="border-brand-500 h-12 w-12 animate-spin rounded-full border-b-2"></div>
       </div>
     );
   }
@@ -135,7 +140,9 @@ const RealisasiPengeluaranPage = () => {
       setFormData({
         category: data.category,
         nominalProjection: parseNumber(data.nominalProjection),
-        nominalActual: data.nominalActual ? parseNumber(data.nominalActual) : "",
+        nominalRealisasi: data.nominalRealisasi
+          ? parseNumber(data.nominalRealisasi)
+          : "",
         details: data.details,
         notes: data.notes || "",
       });
@@ -144,7 +151,7 @@ const RealisasiPengeluaranPage = () => {
       setFormData({
         category: "",
         nominalProjection: "",
-        nominalActual: "",
+        nominalRealisasi: "",
         details: "",
         notes: "",
       });
@@ -160,11 +167,13 @@ const RealisasiPengeluaranPage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const payload = {
       category: formData.category,
       nominalProjection: Number(formData.nominalProjection),
-      nominalActual: formData.nominalActual ? Number(formData.nominalActual) : null,
+      nominalRealisasi: formData.nominalRealisasi
+        ? Number(formData.nominalRealisasi)
+        : null,
       details: formData.details,
       month: selectedMonth,
       year: selectedYear,
@@ -200,15 +209,19 @@ const RealisasiPengeluaranPage = () => {
   const handleQuickProjectionSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickProjection.category || !quickProjection.nominal) return;
-    
+
     setIsLoading(true);
     try {
       // Find if category already exists for this month
-      const existing = costList.find(c => c.category === quickProjection.category);
+      const existing = costList.find(
+        (c) => c.category === quickProjection.category,
+      );
       const payload = {
         category: quickProjection.category,
         nominalProjection: Number(quickProjection.nominal),
-        details: existing?.details || `Biaya ${quickProjection.category} ${selectedMonth}/${selectedYear}`,
+        details:
+          existing?.details ||
+          `Biaya ${quickProjection.category} ${selectedMonth}/${selectedYear}`,
         month: selectedMonth,
         year: selectedYear,
       };
@@ -218,7 +231,7 @@ const RealisasiPengeluaranPage = () => {
       } else {
         await axiosInstance.post("/overhead-cost", payload);
       }
-      
+
       await fetchData();
       setQuickProjection({ category: "", nominal: "" });
     } catch (err) {
@@ -229,30 +242,46 @@ const RealisasiPengeluaranPage = () => {
   };
 
   const months = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
   ];
 
-  const totalActual = costList.reduce((acc, item) => acc + Number(item.nominalActual || 0), 0);
+  const totalActual = costList.reduce(
+    (acc, item) => acc + Number(item.nominalRealisasi || 0),
+    0,
+  );
   const totalProjection = summary?.total || 0;
   const variance = totalActual - totalProjection;
-  const variancePercentage = totalProjection > 0 ? ((variance / totalProjection) * 100).toFixed(1) : "0";
+  const variancePercentage =
+    totalProjection > 0 ? ((variance / totalProjection) * 100).toFixed(1) : "0";
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
           Overhead Cost
         </h1>
-        
+
         <div className="flex gap-2">
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700"
+            className="rounded-lg border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
           >
             {months.map((m, i) => (
-              <option key={m} value={i + 1}>{m}</option>
+              <option key={m} value={i + 1}>
+                {m}
+              </option>
             ))}
           </select>
           <Input
@@ -270,7 +299,10 @@ const RealisasiPengeluaranPage = () => {
           Proyeksi Pengeluaran
         </h2>
 
-        <form onSubmit={handleQuickProjectionSave} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form
+          onSubmit={handleQuickProjectionSave}
+          className="grid grid-cols-1 gap-4 md:grid-cols-3"
+        >
           <div>
             <Label>Kategori</Label>
             <select
@@ -280,14 +312,17 @@ const RealisasiPengeluaranPage = () => {
                 const existingProjection = summary?.summary[cat] || 0;
                 setQuickProjection({
                   category: cat,
-                  nominal: existingProjection > 0 ? existingProjection.toString() : ""
+                  nominal:
+                    existingProjection > 0 ? existingProjection.toString() : "",
                 });
               }}
-              className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 mt-1"
+              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
             >
               <option value="">Pilih Kategori</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -296,14 +331,25 @@ const RealisasiPengeluaranPage = () => {
             <Label>Nominal Proyeksi</Label>
             <Input
               value={formatCurrency(quickProjection.nominal)}
-              onChange={(e) => setQuickProjection({ ...quickProjection, nominal: parseNumber(e.target.value) })}
+              onChange={(e) =>
+                setQuickProjection({
+                  ...quickProjection,
+                  nominal: parseNumber(e.target.value),
+                })
+              }
               placeholder="Contoh: 2.500.000"
               className="mt-1"
             />
           </div>
 
           <div className="flex items-end">
-            <Button size="sm" variant="primary" className="w-full" type="submit" disabled={isLoading}>
+            <Button
+              size="sm"
+              variant="primary"
+              className="w-full"
+              type="submit"
+              disabled={isLoading}
+            >
               Simpan Proyeksi
             </Button>
           </div>
@@ -315,7 +361,7 @@ const RealisasiPengeluaranPage = () => {
             <h3 className="mb-4 text-sm font-semibold text-gray-800 dark:text-white">
               Ringkasan Proyeksi per Kategori
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(summary.summary).map(([cat, val]) => (
                 <div
                   key={cat}
@@ -329,7 +375,7 @@ const RealisasiPengeluaranPage = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-white/5 dark:bg-white/[0.02]">
                 <p className="text-sm text-gray-500">Total Proyeksi</p>
                 <p className="text-xl font-bold text-gray-800 dark:text-white">
@@ -344,9 +390,13 @@ const RealisasiPengeluaranPage = () => {
               </div>
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-white/5 dark:bg-white/[0.02]">
                 <p className="text-sm text-gray-500">Selisih (Variance)</p>
-                <p className={`text-xl font-bold ${variance >= 0 ? 'text-error-500' : 'text-success-500'}`}>
+                <p
+                  className={`text-xl font-bold ${variance >= 0 ? "text-error-500" : "text-success-500"}`}
+                >
                   Rp {variance.toLocaleString("id-ID")}
-                  <span className="ml-2 text-sm font-medium">({variancePercentage}%)</span>
+                  <span className="ml-2 text-sm font-medium">
+                    ({variancePercentage}%)
+                  </span>
                 </p>
               </div>
             </div>
@@ -356,7 +406,7 @@ const RealisasiPengeluaranPage = () => {
 
       {/* Main Table */}
       <div className="rounded-xl bg-white p-6 shadow dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
             Detail Pengeluaran
           </h2>
@@ -374,46 +424,115 @@ const RealisasiPengeluaranPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">No</TableCell>
-                <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Kategori / Detail</TableCell>
-                <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Proyeksi</TableCell>
-                <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Realisasi</TableCell>
-                <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-start text-theme-xs">Selisih</TableCell>
-                <TableCell isHeader className="px-4 py-3 font-medium text-gray-500 text-center text-theme-xs">Action</TableCell>
+                <TableCell
+                  isHeader
+                  className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                >
+                  No
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                >
+                  Kategori / Detail
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                >
+                  Proyeksi
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                >
+                  Realisasi
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
+                >
+                  Selisih
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="text-theme-xs px-4 py-3 text-center font-medium text-gray-500"
+                >
+                  Action
+                </TableCell>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && costList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-gray-500">Loading...</TableCell>
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-gray-500"
+                  >
+                    Loading...
+                  </TableCell>
                 </TableRow>
               ) : costList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-gray-500">Belum ada data di bulan ini</TableCell>
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-gray-500"
+                  >
+                    Belum ada data di bulan ini
+                  </TableCell>
                 </TableRow>
               ) : (
                 costList.map((item, index) => {
-                  const itemVariance = (Number(item.nominalActual) || 0) - Number(item.nominalProjection);
+                  const itemVariance =
+                    (Number(item.nominalRealisasi) || 0) -
+                    Number(item.nominalProjection);
                   return (
                     <TableRow key={item.id}>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">{index + 1}</TableCell>
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
+                        {index + 1}
+                      </TableCell>
                       <TableCell className="px-4 py-3">
-                        <div className="font-medium text-gray-800 dark:text-white/90">{item.category}</div>
-                        <div className="text-xs text-gray-400">{item.details}</div>
+                        <div className="font-medium text-gray-800 dark:text-white/90">
+                          {item.category}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {item.details}
+                        </div>
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm">
-                        Rp {Number(item.nominalProjection).toLocaleString("id-ID")}
+                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
+                        Rp{" "}
+                        {Number(item.nominalProjection).toLocaleString("id-ID")}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-theme-sm font-medium">
-                        {item.nominalActual ? `Rp ${Number(item.nominalActual).toLocaleString("id-ID")}` : "-"}
+                      <TableCell className="text-theme-sm px-4 py-3 font-medium text-gray-500">
+                        {item.nominalRealisasi
+                          ? `Rp ${Number(item.nominalRealisasi).toLocaleString("id-ID")}`
+                          : "-"}
                       </TableCell>
-                      <TableCell className={`px-4 py-3 text-theme-sm font-semibold ${itemVariance > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                        {itemVariance === 0 ? '-' : `Rp ${itemVariance.toLocaleString("id-ID")} `}
+                      <TableCell
+                        className={`text-theme-sm px-4 py-3 font-semibold ${itemVariance > 0 ? "text-red-500" : "text-green-500"}`}
+                      >
+                        {itemVariance === 0
+                          ? "-"
+                          : `Rp ${itemVariance.toLocaleString("id-ID")} `}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex justify-center items-center gap-2">
-                          <Button size="xs" variant="warning" startIcon={<PencilIcon />} onClick={() => openModal("edit", item)}>Edit</Button>
-                          <Button size="xs" variant="danger" startIcon={<TrashBinIcon />} onClick={() => handleDelete(item.id)}>Hapus</Button>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="xs"
+                            variant="warning"
+                            startIcon={<PencilIcon />}
+                            onClick={() => openModal("edit", item)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="danger"
+                            startIcon={<TrashBinIcon />}
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            Hapus
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -426,9 +545,15 @@ const RealisasiPengeluaranPage = () => {
       </div>
 
       {/* Modal */}
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[500px] p-6 lg:p-8">
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        className="max-w-[500px] p-6 lg:p-8"
+      >
         <h4 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white">
-          {modalType === "create" ? "Tambah Data Overhead" : "Edit Data Overhead"}
+          {modalType === "create"
+            ? "Tambah Data Overhead"
+            : "Edit Data Overhead"}
         </h4>
 
         <form onSubmit={handleSave} className="grid gap-4">
@@ -436,13 +561,17 @@ const RealisasiPengeluaranPage = () => {
             <Label>Kategori</Label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 mt-1"
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
+              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
               required
             >
               <option value="">Pilih Kategori</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -451,7 +580,9 @@ const RealisasiPengeluaranPage = () => {
             <Label>Detail Keterangan</Label>
             <Input
               value={formData.details}
-              onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, details: e.target.value })
+              }
               placeholder="Contoh: Tagihan Listrik Desember"
               required
             />
@@ -462,15 +593,25 @@ const RealisasiPengeluaranPage = () => {
               <Label>Nominal Proyeksi</Label>
               <Input
                 value={formatCurrency(formData.nominalProjection)}
-                onChange={(e) => setFormData({ ...formData, nominalProjection: parseNumber(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    nominalProjection: parseNumber(e.target.value),
+                  })
+                }
                 required
               />
             </div>
             <div>
               <Label>Nominal Realisasi (Actual)</Label>
               <Input
-                value={formatCurrency(formData.nominalActual)}
-                onChange={(e) => setFormData({ ...formData, nominalActual: parseNumber(e.target.value) })}
+                value={formatCurrency(formData.nominalRealisasi)}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    nominalRealisasi: parseNumber(e.target.value),
+                  })
+                }
                 placeholder="Kosongkan jika belum ada"
               />
             </div>
@@ -479,18 +620,32 @@ const RealisasiPengeluaranPage = () => {
           <div>
             <Label>Catatan Tambahan</Label>
             <textarea
-              className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 min-h-[80px]"
+              className="min-h-[80px] w-full rounded-lg border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
               placeholder="Catatan..."
             />
           </div>
 
-          {error && <p className="text-sm text-error-500">{error}</p>}
+          {error && <p className="text-error-500 text-sm">{error}</p>}
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button size="sm" variant="outline" onClick={closeModal} type="button">Batal</Button>
-            <Button size="sm" variant="primary" type="submit" disabled={isLoading}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={closeModal}
+              type="button"
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              type="submit"
+              disabled={isLoading}
+            >
               {isLoading ? "Menyimpan..." : "Simpan"}
             </Button>
           </div>
