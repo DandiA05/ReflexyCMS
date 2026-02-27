@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -109,18 +109,7 @@ const TransaksiPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    setIsMounted(true);
-    fetchDropdownData();
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
-      fetchTransactions();
-    }
-  }, [filters, isMounted]);
-
-  const fetchDropdownData = async () => {
+  const fetchDropdownData = useCallback(async () => {
     try {
       const [custRes, empRes, servRes] = await Promise.all([
         axiosInstance.get("/customers"),
@@ -133,9 +122,9 @@ const TransaksiPage = () => {
     } catch (err) {
       console.error("Failed to fetch dropdown data", err);
     }
-  };
+  }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -155,7 +144,18 @@ const TransaksiPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchDropdownData();
+  }, [fetchDropdownData]);
+
+  useEffect(() => {
+    if (isMounted) {
+      fetchTransactions();
+    }
+  }, [fetchTransactions, isMounted]);
 
   const openModal = (type: "create" | "edit", data?: Transaction) => {
     setModalType(type);
@@ -208,11 +208,11 @@ const TransaksiPage = () => {
   const handleItemChange = (
     index: number,
     field: keyof TransactionItem,
-    value: any,
+    value: string | number,
   ) => {
     const newItems = [...items];
     if (field === "serviceId") {
-      const service = services.find((s) => s.id === value);
+      const service = services.find((s) => s.id === value.toString());
       if (service) {
         newItems[index] = {
           ...newItems[index],
@@ -222,7 +222,10 @@ const TransaksiPage = () => {
         };
       }
     } else {
-      (newItems[index] as any)[field] = value;
+      newItems[index] = {
+        ...newItems[index],
+        [field]: value,
+      };
     }
     setItems(newItems);
   };
@@ -255,6 +258,7 @@ const TransaksiPage = () => {
       fetchTransactions();
       closeModal();
     } catch (err) {
+      console.error("Failed to save transaction", err);
       alert("Gagal menyimpan transaksi.");
     } finally {
       setIsLoading(false);
@@ -267,6 +271,7 @@ const TransaksiPage = () => {
         await axiosInstance.delete(`/transactions/${id}`);
         fetchTransactions();
       } catch (err) {
+        console.error("Failed to delete transaction", err);
         alert("Gagal menghapus transaksi.");
       }
     }

@@ -1,16 +1,16 @@
 "use client";
-import Checkbox from "@/components/form/input/Checkbox";
+
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import Link from "next/link";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axios";
 
-
 import { useAuthStore } from "@/store/authStore";
+import { isAxiosError } from "axios";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,15 +36,22 @@ export default function SignInForm() {
 
       // Set cookie (valid for 1 day)
       document.cookie = `accessToken=${token}; path=/; max-age=86400; SameSite=Strict`;
-      
+
       // Update global store
       if (user) {
         setUser(user);
       }
 
       router.push("/");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        setError(
+          err.response?.data?.message ||
+            "Login failed. Please check your credentials.",
+        );
+      } else {
+        setError("An unexpected error occurred.");
+      }
       console.error("Login error:", err);
     } finally {
       setIsLoading(false);
@@ -52,11 +59,11 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="flex flex-col flex-1 lg:w-1/2 w-full">
-      <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+    <div className="flex w-full flex-1 flex-col lg:w-1/2">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
         <div>
           <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+            <h1 className="text-title-sm sm:text-title-md mb-2 font-semibold text-gray-800 dark:text-white/90">
               Sign In
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -71,11 +78,13 @@ export default function SignInForm() {
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input 
-                    placeholder="info@gmail.com" 
-                    type="email" 
+                  <Input
+                    placeholder="info@gmail.com"
+                    type="email"
                     value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setEmail(e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -88,12 +97,14 @@ export default function SignInForm() {
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setPassword(e.target.value)
+                      }
                       required
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                      className="absolute top-1/2 right-4 z-30 -translate-y-1/2 cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
@@ -103,15 +114,16 @@ export default function SignInForm() {
                     </span>
                   </div>
                 </div>
-                
-                {error && (
-                  <div className="text-sm text-error-500">
-                    {error}
-                  </div>
-                )}
+
+                {error && <div className="text-error-500 text-sm">{error}</div>}
 
                 <div>
-                  <Button className="w-full" size="sm" type="submit" disabled={isLoading}>
+                  <Button
+                    className="w-full"
+                    size="sm"
+                    type="submit"
+                    disabled={isLoading}
+                  >
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>

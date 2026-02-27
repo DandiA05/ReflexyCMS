@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import {
   Table,
   TableBody,
@@ -13,7 +14,6 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
-import Pagination from "@/components/tables/Pagination";
 import axiosInstance from "@/lib/axios";
 
 interface OverheadCost {
@@ -82,27 +82,16 @@ const RealisasiPengeluaranPage = () => {
     nominal: "",
   });
 
-  useEffect(() => {
-    setIsMounted(true);
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
-      fetchData();
-    }
-  }, [selectedMonth, selectedYear, isMounted]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axiosInstance.get("/overhead-cost/categories");
       setCategories(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch categories", err);
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError("");
     try {
@@ -116,14 +105,25 @@ const RealisasiPengeluaranPage = () => {
       ]);
 
       setCostList(listRes.data.data || []);
-      setSummary(summaryRes.data.data || []);
+      setSummary(summaryRes.data.data || null);
     } catch (err) {
       console.error("Failed to fetch overhead data", err);
       setError("Gagal mengambil data pengeluaran.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    if (isMounted) {
+      fetchData();
+    }
+  }, [fetchData, isMounted]);
 
   if (!isMounted) {
     return (
@@ -188,8 +188,13 @@ const RealisasiPengeluaranPage = () => {
       }
       await fetchData();
       closeModal();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Gagal menyimpan data.");
+    } catch (err) {
+      console.error(err);
+      let errorMsg = "Gagal menyimpan data.";
+      if (axios.isAxiosError(err)) {
+        errorMsg = err.response?.data?.message || errorMsg;
+      }
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +206,12 @@ const RealisasiPengeluaranPage = () => {
         await axiosInstance.delete(`/overhead-cost/${id}`);
         fetchData();
       } catch (err) {
-        alert("Gagal menghapus data.");
+        console.error(err);
+        let errorMsg = "Gagal menghapus data.";
+        if (axios.isAxiosError(err)) {
+          errorMsg = err.response?.data?.message || errorMsg;
+        }
+        alert(errorMsg);
       }
     }
   };
@@ -235,7 +245,12 @@ const RealisasiPengeluaranPage = () => {
       await fetchData();
       setQuickProjection({ category: "", nominal: "" });
     } catch (err) {
-      alert("Gagal menyimpan proyeksi.");
+      console.error(err);
+      let errorMsg = "Gagal menyimpan proyeksi.";
+      if (axios.isAxiosError(err)) {
+        errorMsg = err.response?.data?.message || errorMsg;
+      }
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }

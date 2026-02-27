@@ -14,6 +14,7 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons";
 import Pagination from "@/components/tables/Pagination";
+import axios from "axios";
 import axiosInstance from "@/lib/axios";
 
 interface Karyawan {
@@ -129,9 +130,13 @@ const MasterKaryawanPage = () => {
 
       await fetchEmployees();
       closeModal();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error saving employee", err);
-      setError(err.response?.data?.message || "Gagal menyimpan data karyawan.");
+      let errorMessage = "Gagal menyimpan data karyawan.";
+      if (axios.isAxiosError(err)) {
+        errorMessage = err.response?.data?.message || errorMessage;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

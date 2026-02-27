@@ -1,0 +1,216 @@
+﻿
+> free-nextjs-admin-dashboard@2.0.2 build
+> next build
+
+   Γû▓ Next.js 15.2.3
+   - Environments: .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+node.exe : 
+At C:\Program Files\nod
+ejs\npm.ps1:16 char:5
++     & 
+"$basedir/node$exe"  "$
+basedir/node_modules/np
+m/bin/npm-cli.js" ...
++     ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (:String) [],    
+ RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Failed to compile.
+
+./src/app/(full-width-p
+ages)/(auth)/layout.tsx
+1:8  Error: 
+'GridShape' is defined 
+but never used.  @types
+cript-eslint/no-unused-
+vars
+5:8  Error: 'Image' is 
+defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+6:8  Error: 'Link' is 
+defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+
+./src/components/auth/S
+ignInForm.tsx
+2:8  Error: 'Checkbox' 
+is defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+6:10  Error: 
+'ChevronLeftIcon' is 
+defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+7:8  Error: 'Link' is 
+defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+46:19  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+
+./src/components/CMS/Ma
+ster/Karyawan/Index.tsx
+132:19  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+
+./src/components/CMS/Ma
+ster/Layanan/Index.tsx
+129:19  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+
+./src/components/CMS/Ma
+ster/Pelanggan/Index.ts
+x
+128:19  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+
+./src/components/CMS/Mo
+nitoring/Monitoring.tsx
+23:54  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+25:10  Error: 'error' 
+is assigned a value 
+but never used.  @types
+cript-eslint/no-unused-
+vars
+27:10  Error: 
+'totalTransaksi' is 
+assigned a value but 
+never used.  @typescrip
+t-eslint/no-unused-vars
+28:10  Error: 
+'totalPendapatan' is 
+assigned a value but 
+never used.  @typescrip
+t-eslint/no-unused-vars
+38:19  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+49:9  Error: 
+'openModal' is 
+assigned a value but 
+never used.  @typescrip
+t-eslint/no-unused-vars
+58:9  Error: 
+'investorData' is 
+assigned a value but 
+never used.  @typescrip
+t-eslint/no-unused-vars
+67:9  Error: 
+'filteredData' is 
+assigned a value but 
+never used.  @typescrip
+t-eslint/no-unused-vars
+
+./src/components/CMS/Pe
+ngeluaran/Index.tsx
+16:8  Error: 
+'Pagination' is 
+defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+94:6  Warning: React 
+Hook useEffect has a 
+missing dependency: 
+'fetchData'. Either 
+include it or remove 
+the dependency array.  
+react-hooks/exhaustive-
+deps
+191:19  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+203:16  Error: 'err' 
+is defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+237:14  Error: 'err' 
+is defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+
+./src/components/CMS/tr
+ansaksi/Transaksi.tsx
+121:6  Warning: React 
+Hook useEffect has a 
+missing dependency: 
+'fetchTransactions'. 
+Either include it or 
+remove the dependency 
+array.  react-hooks/exh
+austive-deps
+211:12  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+225:27  Error: 
+Unexpected any. 
+Specify a different 
+type.  @typescript-esli
+nt/no-explicit-any
+257:14  Error: 'err' 
+is defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+269:16  Error: 'err' 
+is defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+
+./src/components/header
+/UserDropdown.tsx
+3:8  Error: 'Link' is 
+defined but never 
+used.  @typescript-esli
+nt/no-unused-vars
+
+./src/layout/AppSidebar
+.tsx
+71:10  Error: 
+'subMenuHeight' is 
+assigned a value but 
+never used.  @typescrip
+t-eslint/no-unused-vars
+
+info  - Need to 
+disable some ESLint 
+rules? Learn more 
+here: https://nextjs.or
+g/docs/app/api-referenc
+e/config/eslint#disabli
+ng-rules

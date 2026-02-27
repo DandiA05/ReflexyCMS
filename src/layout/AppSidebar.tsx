@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -24,7 +24,7 @@ type NavItem = {
 
 // --- Group MENU
 const navItems: NavItem[] = [
-   {
+  {
     icon: <DollarLineIcon />,
     name: "Overhead Cost",
     path: "/pengeluaran",
@@ -53,7 +53,7 @@ const masterItems: NavItem[] = [
     name: "Karyawan",
     path: "/master/karyawan",
   },
-   {
+  {
     icon: <UserCircleIcon />,
     name: "Pelanggan",
     path: "/master/pelanggan",
@@ -68,11 +68,6 @@ const AppSidebar: React.FC = () => {
     type: "main" | "master";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {},
-  );
-
-  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
@@ -160,18 +155,6 @@ const AppSidebar: React.FC = () => {
       ))}
     </ul>
   );
-
-  useEffect(() => {
-    if (openSubmenu !== null) {
-      const key = `${openSubmenu.type}-${openSubmenu.index}`;
-      if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prev) => ({
-          ...prev,
-          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
-        }));
-      }
-    }
-  }, [openSubmenu]);
 
   return (
     <aside
