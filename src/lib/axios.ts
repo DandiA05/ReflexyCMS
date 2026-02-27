@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const isServer = typeof window === "undefined";
+
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001",
+  // Use absolute URL on server, relative path on client for proxying
+  baseURL: isServer
+    ? "http://202.10.44.210:3001/api"
+    : process.env.NEXT_PUBLIC_BACKEND_URL || "/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -25,7 +30,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Add a response interceptor
@@ -41,7 +46,7 @@ axiosInstance.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
