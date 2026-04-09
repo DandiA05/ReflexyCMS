@@ -25,7 +25,6 @@ interface DashboardData {
 
 const Index = () => {
   const [filters, setFilters] = useState({
-    layanan: "",
     status: "",
     startDate: "",
     endDate: "",
@@ -63,7 +62,7 @@ const Index = () => {
   };
 
   const handleReset = () => {
-    setFilters({ layanan: "", status: "", startDate: "", endDate: "" });
+    setFilters({ status: "", startDate: "", endDate: "" });
   };
 
   return (
@@ -72,32 +71,11 @@ const Index = () => {
         Monitoring Transaksi
       </h1>
 
-      {/* 🔍 Filter Card */}
       <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
         <h2 className="mb-4 text-lg font-semibold text-gray-700 dark:text-white">
           Filter Transaksi
         </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Layanan */}
-          <div>
-            <Label>Layanan</Label>
-            <div className="relative">
-              <Select
-                value={filters.layanan}
-                options={[
-                  { value: "Refleksi 60 Menit", label: "Refleksi 60 Menit" },
-                  { value: "Refleksi 90 Menit", label: "Refleksi 90 Menit" },
-                  { value: "Pijit Punggung", label: "Pijit Punggung" },
-                ]}
-                placeholder="Semua"
-                onChange={(value) => setFilters({ ...filters, layanan: value })}
-                className="dark:bg-dark-900"
-              />
-              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                <ChevronDownIcon />
-              </span>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <Label>Start Date</Label>
             <DatePicker

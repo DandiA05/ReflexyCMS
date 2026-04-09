@@ -21,7 +21,6 @@ interface Layanan {
   name: string;
   description: string;
   price: string | number; // Handling both potential formats
-  category: string;
   duration: number;
   active: boolean;
 }
@@ -41,7 +40,6 @@ const MasterLayananPage = () => {
     name: "",
     description: "",
     price: "",
-    category: "Hair", // Default category
     duration: "",
   });
 
@@ -82,7 +80,6 @@ const MasterLayananPage = () => {
         name: data.name,
         description: data.description || "",
         price: data.price.toString(),
-        category: data.category || "Hair",
         duration: data.duration?.toString() || "",
       });
     } else {
@@ -91,7 +88,6 @@ const MasterLayananPage = () => {
         name: "",
         description: "",
         price: "",
-        category: "Hair",
         duration: "",
       });
     }
@@ -112,7 +108,6 @@ const MasterLayananPage = () => {
       name: formData.name,
       description: formData.description,
       price: Number(formData.price),
-      category: formData.category,
       duration: Number(formData.duration),
     };
 
@@ -208,12 +203,6 @@ const MasterLayananPage = () => {
                     isHeader
                     className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
                   >
-                    Kategori
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="text-theme-xs px-4 py-3 text-start font-medium text-gray-500"
-                  >
                     Durasi
                   </TableCell>
                   <TableCell
@@ -235,7 +224,7 @@ const MasterLayananPage = () => {
                 {isLoading && layananList.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className="py-6 text-center text-gray-500"
                     >
                       Loading...
@@ -254,9 +243,6 @@ const MasterLayananPage = () => {
                         <div className="text-xs text-gray-400">
                           {item.description}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
-                        {item.category}
                       </TableCell>
                       <TableCell className="text-theme-sm px-4 py-3 text-gray-500">
                         {item.duration} Menit
@@ -291,7 +277,7 @@ const MasterLayananPage = () => {
                 {!isLoading && layananList.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className="py-6 text-center text-gray-500"
                     >
                       Tidak ada data layanan
@@ -345,22 +331,6 @@ const MasterLayananPage = () => {
             />
           </div>
 
-          <div>
-            <Label>Kategori</Label>
-            <select
-              className="focus:border-brand-300 focus:ring-brand-500/10 w-full rounded-lg border px-3 py-2 text-sm focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-            >
-              <option value="Body">Body</option>
-              <option value="Hair">Hair</option>
-              <option value="Face">Face</option>
-              <option value="Nails">Nails</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
