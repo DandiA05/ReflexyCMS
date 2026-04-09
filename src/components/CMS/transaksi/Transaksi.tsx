@@ -30,6 +30,7 @@ interface Employee {
   id: string;
   name: string;
   position: string;
+  salary: string | number;
 }
 
 interface Service {
@@ -295,14 +296,23 @@ const TransaksiPage = () => {
       if (trx.employee && trx.commissionAmount) {
         const empId = trx.employee.id;
         if (!acc[empId]) {
-          acc[empId] = { name: trx.employee.name, total: 0, count: 0 };
+          const empData = employees.find((e) => e.id === empId);
+          acc[empId] = {
+            name: trx.employee.name,
+            total: 0,
+            count: 0,
+            salary: empData?.salary || 0,
+          };
         }
         acc[empId].total += Number(trx.commissionAmount);
         acc[empId].count += 1;
       }
       return acc;
     },
-    {} as Record<string, { name: string; total: number; count: number }>,
+    {} as Record<
+      string,
+      { name: string; total: number; count: number; salary: number | string }
+    >,
   );
 
   const handleReset = () => {
@@ -655,13 +665,25 @@ const TransaksiPage = () => {
                 >
                   Total Komisi
                 </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-end font-medium text-gray-500"
+                >
+                  Gaji Per Bulan
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-end font-medium text-gray-500"
+                >
+                  Total Gaji
+                </TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {Object.keys(commissionSummary).length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={3}
+                    colSpan={5}
                     className="py-6 text-center text-gray-500"
                   >
                     Belum ada data komisi
@@ -678,6 +700,15 @@ const TransaksiPage = () => {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400">
                       Rp {summary.total.toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right text-gray-500">
+                      Rp {Number(summary.salary).toLocaleString("id-ID")}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
+                      Rp{" "}
+                      {(
+                        Number(summary.total) + Number(summary.salary)
+                      ).toLocaleString("id-ID")}
                     </TableCell>
                   </TableRow>
                 ))

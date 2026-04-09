@@ -40,8 +40,9 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
-      if (typeof window !== "undefined") {
-        // Dispatch custom event for 401 errors
+      const isLoginRequest = error.config?.url?.includes("auth/login");
+      if (typeof window !== "undefined" && !isLoginRequest) {
+        // Dispatch custom event for 401 errors, except login
         window.dispatchEvent(new CustomEvent("session-expired"));
       }
     }
