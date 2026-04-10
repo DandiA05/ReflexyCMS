@@ -19,6 +19,7 @@ import Pagination from "../../tables/Pagination";
 import AlertModal from "../../modal/AlertModal";
 import axiosInstance from "@/lib/axios";
 import Input from "@/components/form/input/InputField";
+import { useAuthStore } from "@/store/authStore";
 
 interface Customer {
   id: string;
@@ -57,7 +58,7 @@ interface Transaction {
   paymentMethod: string;
   status: string;
   notes: string | null;
-  items: TransactionItem[];
+  items: TransactionItem[] | string;
   createdAt: string;
   customer: {
     id: string;
@@ -72,6 +73,7 @@ interface Transaction {
 }
 
 const TransaksiPage = () => {
+  const { user } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [filters, setFilters] = useState({
     customerId: "",
@@ -138,7 +140,16 @@ const TransaksiPage = () => {
       const response = await axiosInstance.get(
         `/transactions?${params.toString()}`,
       );
-      setTransactions(response.data.data || []);
+      const parsedTransactions = (response.data.data || []).map(
+        (trx: Transaction) => ({
+          ...trx,
+          items:
+            typeof trx.items === "string"
+              ? JSON.parse(trx.items)
+              : trx.items || [],
+        }),
+      );
+      setTransactions(parsedTransactions);
       setSummaryTotal(response.data.total || 0);
     } catch (err) {
       console.error("Failed to fetch transactions", err);
@@ -169,8 +180,11 @@ const TransaksiPage = () => {
         status: data.status,
         notes: data.notes || "",
       });
+      const parsedItems =
+        typeof data.items === "string" ? JSON.parse(data.items) : data.items;
+
       setItems(
-        data.items.map((item) => ({
+        (parsedItems || []).map((item: TransactionItem) => ({
           serviceId: item.serviceId,
           serviceName: item.serviceName,
           price: Number(item.price),
@@ -639,84 +653,86 @@ const TransaksiPage = () => {
       </div>
 
       {/* Commission Summary Table */}
-      <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
-        <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">
-          Ringkasan Komisi per Therapist
-        </h2>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-              <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-start font-medium text-gray-500"
-                >
-                  Nama Therapist
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-center font-medium text-gray-500"
-                >
-                  Jumlah Transaksi
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-end font-medium text-gray-500"
-                >
-                  Total Komisi
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-end font-medium text-gray-500"
-                >
-                  Gaji Per Bulan
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-end font-medium text-gray-500"
-                >
-                  Total Gaji
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {Object.keys(commissionSummary).length === 0 ? (
+      {user?.role !== "staff" && (
+        <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">
+            Ringkasan Komisi per Therapist
+          </h2>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   <TableCell
-                    colSpan={5}
-                    className="py-6 text-center text-gray-500"
+                    isHeader
+                    className="px-4 py-3 text-start font-medium text-gray-500"
                   >
-                    Belum ada data komisi
+                    Nama Therapist
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-center font-medium text-gray-500"
+                  >
+                    Jumlah Transaksi
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-end font-medium text-gray-500"
+                  >
+                    Total Komisi
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-end font-medium text-gray-500"
+                  >
+                    Gaji Per Bulan
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-end font-medium text-gray-500"
+                  >
+                    Total Gaji
                   </TableCell>
                 </TableRow>
-              ) : (
-                Object.values(commissionSummary).map((summary, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="px-4 py-3 font-medium text-gray-800 dark:text-white">
-                      {summary.name}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-center text-gray-500">
-                      {summary.count}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400">
-                      Rp {summary.total.toLocaleString("id-ID")}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-right text-gray-500">
-                      Rp {Number(summary.salary).toLocaleString("id-ID")}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
-                      Rp{" "}
-                      {(
-                        Number(summary.total) + Number(summary.salary)
-                      ).toLocaleString("id-ID")}
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                {Object.keys(commissionSummary).length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="py-6 text-center text-gray-500"
+                    >
+                      Belum ada data komisi
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  Object.values(commissionSummary).map((summary, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="px-4 py-3 font-medium text-gray-800 dark:text-white">
+                        {summary.name}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-center text-gray-500">
+                        {summary.count}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400">
+                        Rp {summary.total.toLocaleString("id-ID")}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right text-gray-500">
+                        Rp {Number(summary.salary).toLocaleString("id-ID")}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
+                        Rp{" "}
+                        {(
+                          Number(summary.total) + Number(summary.salary)
+                        ).toLocaleString("id-ID")}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
+      )}
 
       <Modal
         isOpen={isOpen}
@@ -745,7 +761,19 @@ const TransaksiPage = () => {
               <Label>Therapist</Label>
               <Select
                 value={formData.employeeId}
-                options={employees.map((e) => ({ value: e.id, label: e.name }))}
+                options={employees
+                  .filter((e) => {
+                    // If editing, the current employee of the transaction must be visible
+                    if (modalType === "edit" && e.id === formData.employeeId)
+                      return true;
+                    // Check if employee is currently busy (status 'pending')
+                    const isBusy = transactions.some(
+                      (trx) =>
+                        trx.employeeId === e.id && trx.status === "pending",
+                    );
+                    return !isBusy;
+                  })
+                  .map((e) => ({ value: e.id, label: e.name }))}
                 placeholder="Pilih Therapist"
                 onChange={(val) =>
                   setFormData({ ...formData, employeeId: val })

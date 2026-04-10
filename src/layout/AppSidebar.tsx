@@ -14,6 +14,7 @@ import {
   UserCircleIcon,
   UserIcon,
 } from "../icons/index";
+import { useAuthStore } from "@/store/authStore";
 
 type NavItem = {
   name: string;
@@ -61,6 +62,9 @@ const masterItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
+  const { user } = useAuthStore();
+  const role = user?.role;
+
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
 
@@ -207,22 +211,29 @@ const AppSidebar: React.FC = () => {
       <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
         <nav className="mb-6 flex flex-col gap-6">
           {/* Group: Master */}
-          <div>
-            <h2
-              className={`mb-4 flex text-xs leading-[20px] text-gray-400 uppercase ${
-                !isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-              }`}
-            >
-              {isExpanded || isHovered || isMobileOpen ? (
-                "Master"
-              ) : (
-                <HorizontaLDots />
+          {role !== "manager" && (
+            <div>
+              <h2
+                className={`mb-4 flex text-xs leading-[20px] text-gray-400 uppercase ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
+                }`}
+              >
+                {isExpanded || isHovered || isMobileOpen ? (
+                  "Master"
+                ) : (
+                  <HorizontaLDots />
+                )}
+              </h2>
+              {renderMenuItems(
+                masterItems.filter(
+                  (item) => !(role === "staff" && item.name === "Karyawan"),
+                ),
+                "master",
               )}
-            </h2>
-            {renderMenuItems(masterItems, "master")}
-          </div>
+            </div>
+          )}
           {/* Group: Menu */}
           <div>
             <h2

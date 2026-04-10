@@ -40,6 +40,8 @@ export default function SignInForm() {
       // Update global store
       if (user) {
         setUser(user);
+        // Set role cookie for middleware access
+        document.cookie = `userRole=${user.role}; path=/; max-age=86400; SameSite=Strict`;
       }
 
       router.push("/");

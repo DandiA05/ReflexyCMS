@@ -28,6 +28,7 @@ export default function UserDropdown() {
     logout();
     // Also clear cookie
     document.cookie = "accessToken=; path=/; max-age=0";
+    document.cookie = "userRole=; path=/; max-age=0";
     closeDropdown();
     router.push("/signin");
   }

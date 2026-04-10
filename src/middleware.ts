@@ -3,26 +3,45 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('accessToken')?.value
+  const userRole = request.cookies.get('userRole')?.value
+  const { pathname } = request.nextUrl
 
   // Define paths that are public (no auth needed)
   const publicPaths = ['/signin', '/signup', '/forgot-password']
   const isPublicPath = publicPaths.some((path) => 
-    request.nextUrl.pathname.startsWith(path)
+    pathname.startsWith(path)
   )
 
   // If there is no token and the path is not public, redirect to signin
   if (!token && !isPublicPath) {
     const loginUrl = new URL('/signin', request.url)
-    // Optional: Add redirect query param to return user after login
-    // loginUrl.searchParams.set('from', request.nextUrl.pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // If there is a token and user is on a public path (like login), 
-  // you might want to redirect them to dashboard (optional, depends on requirement)
-  // if (token && isPublicPath) {
-  //   return NextResponse.redirect(new URL('/', request.url))
-  // }
+  // If authenticated, check role-based access
+  if (token && !isPublicPath) {
+    // Admin has access to everything
+    if (userRole === 'admin') {
+      return NextResponse.next()
+    }
+
+    // Staff restrictions
+    if (userRole === 'staff') {
+      if (pathname.startsWith('/master/karyawan')) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
+
+    // Manager restrictions: only Overhead, Transaksi, Monitoring
+    if (userRole === 'manager') {
+      const allowedPaths = ['/', '/pengeluaran', '/transaksi', '/monitoring', '/profile']
+      const isAllowed = allowedPaths.some(path => pathname === path || pathname.startsWith(path + '/'))
+      
+      if (!isAllowed) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
+  }
 
   return NextResponse.next()
 }
