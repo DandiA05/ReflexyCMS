@@ -253,8 +253,8 @@ const TransaksiPage = () => {
     e.preventDefault();
     setIsLoading(true);
     const subtotal = calculateSubtotal();
-    const tax = subtotal * 0.11; // Example 11% tax
-    const total = subtotal + tax;
+    const tax = 0;
+    const total = subtotal;
 
     const payload = {
       ...formData,
@@ -535,12 +535,7 @@ const TransaksiPage = () => {
                   >
                     Subtotal
                   </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-4 py-3 text-start font-medium text-gray-500"
-                  >
-                    Pajak
-                  </TableCell>
+
                   <TableCell
                     isHeader
                     className="px-4 py-3 text-end font-medium text-gray-500"
@@ -589,9 +584,7 @@ const TransaksiPage = () => {
                     <TableCell className="px-4 py-3 text-gray-500">
                       Rp {Number(trx.subtotal).toLocaleString("id-ID")}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500">
-                      Rp {Number(trx.tax).toLocaleString("id-ID")}
-                    </TableCell>
+
                     <TableCell className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
                       Rp {Number(trx.total).toLocaleString("id-ID")}
                     </TableCell>
@@ -884,12 +877,8 @@ const TransaksiPage = () => {
             <div className="text-sm text-gray-500">
               Subtotal: Rp {calculateSubtotal().toLocaleString("id-ID")}
             </div>
-            <div className="text-sm text-gray-500">
-              Pajak (11%): Rp{" "}
-              {(calculateSubtotal() * 0.11).toLocaleString("id-ID")}
-            </div>
             <div className="text-xl font-bold text-gray-900 dark:text-white">
-              Total: Rp {(calculateSubtotal() * 1.11).toLocaleString("id-ID")}
+              Total: Rp {calculateSubtotal().toLocaleString("id-ID")}
             </div>
           </div>
 
