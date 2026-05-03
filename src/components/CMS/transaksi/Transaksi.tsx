@@ -91,7 +91,9 @@ const TransaksiPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenAlert, setIsOpenAlert] = useState(false);
-  const [modalType, setModalType] = useState<"create" | "edit">("create");
+  const [modalType, setModalType] = useState<"create" | "edit" | "detail">(
+    "create",
+  );
   const [currentId, setCurrentId] = useState<string | null>(null);
 
   // Form State
@@ -140,15 +142,18 @@ const TransaksiPage = () => {
       const response = await axiosInstance.get(
         `/transactions?${params.toString()}`,
       );
-      const parsedTransactions = (response.data.data || []).map(
-        (trx: Transaction) => ({
+      const parsedTransactions = (response.data.data || [])
+        .map((trx: Transaction) => ({
           ...trx,
           items:
             typeof trx.items === "string"
               ? JSON.parse(trx.items)
               : trx.items || [],
-        }),
-      );
+        }))
+        .sort(
+          (a: Transaction, b: Transaction) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
       setTransactions(parsedTransactions);
       setSummaryTotal(response.data.total || 0);
     } catch (err) {
@@ -169,9 +174,12 @@ const TransaksiPage = () => {
     }
   }, [fetchTransactions, isMounted]);
 
-  const openModal = (type: "create" | "edit", data?: Transaction) => {
+  const openModal = (
+    type: "create" | "edit" | "detail",
+    data?: Transaction,
+  ) => {
     setModalType(type);
-    if (type === "edit" && data) {
+    if ((type === "edit" || type === "detail") && data) {
       setCurrentId(data.id);
       setFormData({
         customerId: data.customerId,
@@ -604,14 +612,23 @@ const TransaksiPage = () => {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          onClick={() => openModal("edit", trx)}
-                          disabled={trx.status === "completed"}
-                        >
-                          Edit
-                        </Button>
+                        {trx.status === "completed" ? (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => openModal("detail", trx)}
+                          >
+                            Detail
+                          </Button>
+                        ) : (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => openModal("edit", trx)}
+                          >
+                            Edit
+                          </Button>
+                        )}
                         <Button
                           size="xs"
                           variant="danger"
@@ -733,7 +750,11 @@ const TransaksiPage = () => {
         className="max-h-[90vh] max-w-[800px] overflow-y-auto p-6 lg:p-10"
       >
         <h4 className="text-title-sm mb-7 font-semibold text-gray-800 dark:text-white/90">
-          {modalType === "create" ? "Tambah Transaksi" : "Edit Transaksi"}
+          {modalType === "create"
+            ? "Tambah Transaksi"
+            : modalType === "edit"
+              ? "Edit Transaksi"
+              : "Detail Transaksi"}
         </h4>
 
         <form onSubmit={handleSave} className="space-y-6">
@@ -747,6 +768,7 @@ const TransaksiPage = () => {
                 onChange={(val) =>
                   setFormData({ ...formData, customerId: val })
                 }
+                disabled={modalType === "detail"}
               />
             </div>
 
@@ -757,7 +779,10 @@ const TransaksiPage = () => {
                 options={employees
                   .filter((e) => {
                     // If editing, the current employee of the transaction must be visible
-                    if (modalType === "edit" && e.id === formData.employeeId)
+                    if (
+                      (modalType === "edit" || modalType === "detail") &&
+                      e.id === formData.employeeId
+                    )
                       return true;
                     // Check if employee is currently busy (status 'pending')
                     const isBusy = transactions.some(
@@ -771,6 +796,7 @@ const TransaksiPage = () => {
                 onChange={(val) =>
                   setFormData({ ...formData, employeeId: val })
                 }
+                disabled={modalType === "detail"}
               />
             </div>
 
@@ -786,6 +812,7 @@ const TransaksiPage = () => {
                 onChange={(val) =>
                   setFormData({ ...formData, paymentMethod: val })
                 }
+                disabled={modalType === "detail"}
               />
             </div>
 
@@ -799,6 +826,7 @@ const TransaksiPage = () => {
                   { value: "cancelled", label: "Cancelled" },
                 ]}
                 onChange={(val) => setFormData({ ...formData, status: val })}
+                disabled={modalType === "detail"}
               />
             </div>
           </div>
@@ -806,14 +834,16 @@ const TransaksiPage = () => {
           <div className="border-t pt-4">
             <div className="mb-4 flex items-center justify-between">
               <Label className="text-lg font-bold">Layanan / Item</Label>
-              <Button
-                type="button"
-                size="xs"
-                variant="primary"
-                onClick={addItem}
-              >
-                Add Service
-              </Button>
+              {modalType !== "detail" && (
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="primary"
+                  onClick={addItem}
+                >
+                  Add Service
+                </Button>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -834,6 +864,7 @@ const TransaksiPage = () => {
                       onChange={(val) =>
                         handleItemChange(index, "serviceId", val)
                       }
+                      disabled={modalType === "detail"}
                     />
                   </div>
                   <div className="col-span-2">
@@ -856,17 +887,20 @@ const TransaksiPage = () => {
                           Number(e.target.value),
                         )
                       }
+                      disabled={modalType === "detail"}
                     />
                   </div>
                   <div className="col-span-2 pb-1">
-                    <Button
-                      type="button"
-                      variant="danger"
-                      className="w-full"
-                      onClick={() => removeItem(index)}
-                    >
-                      <TrashBinIcon />
-                    </Button>
+                    {modalType !== "detail" && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        className="w-full"
+                        onClick={() => removeItem(index)}
+                      >
+                        <TrashBinIcon />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -892,16 +926,19 @@ const TransaksiPage = () => {
                 setFormData({ ...formData, notes: e.target.value })
               }
               placeholder="Catatan tambahan..."
+              disabled={modalType === "detail"}
             />
           </div>
 
           <div className="mt-8 flex w-full items-center justify-end gap-3">
             <Button size="sm" variant="outline" onClick={closeModal}>
-              Batal
+              {modalType === "detail" ? "Tutup" : "Batal"}
             </Button>
-            <Button size="sm" type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Simpan Transaksi"}
-            </Button>
+            {modalType !== "detail" && (
+              <Button size="sm" type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Simpan Transaksi"}
+              </Button>
+            )}
           </div>
         </form>
       </Modal>
