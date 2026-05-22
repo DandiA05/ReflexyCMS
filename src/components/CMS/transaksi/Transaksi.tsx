@@ -72,6 +72,33 @@ interface Transaction {
   commissionAmount?: number;
 }
 
+const safeParseDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  const normalized = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
+  return new Date(normalized);
+};
+
+const formatDateTimeForInput = (dateInput: Date | string) => {
+  const d = typeof dateInput === "string" ? safeParseDate(dateInput) : dateInput;
+  if (isNaN(d.getTime())) return "";
+  const pad = (num: number) => String(num).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const formatPayloadDateTime = (dateTimeStr: string) => {
+  if (!dateTimeStr) return "";
+  let formatted = dateTimeStr.replace("T", " ");
+  if (formatted.length === 16) {
+    formatted += ":00";
+  }
+  return formatted;
+};
+
 const TransaksiPage = () => {
   const { user } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
@@ -103,6 +130,7 @@ const TransaksiPage = () => {
     paymentMethod: "cash",
     status: "completed",
     notes: "",
+    createdAt: "",
   });
 
   const [items, setItems] = useState<TransactionItem[]>([]);
@@ -187,6 +215,7 @@ const TransaksiPage = () => {
         paymentMethod: data.paymentMethod,
         status: data.status,
         notes: data.notes || "",
+        createdAt: data.createdAt ? formatDateTimeForInput(data.createdAt) : "",
       });
       const parsedItems =
         typeof data.items === "string" ? JSON.parse(data.items) : data.items;
@@ -207,6 +236,7 @@ const TransaksiPage = () => {
         paymentMethod: "cash",
         status: "completed",
         notes: "",
+        createdAt: formatDateTimeForInput(new Date()),
       });
       setItems([{ serviceId: "", serviceName: "", price: 0, quantity: 1 }]);
     }
@@ -266,11 +296,13 @@ const TransaksiPage = () => {
 
     const payload = {
       ...formData,
+      createdAt: formatPayloadDateTime(formData.createdAt),
       subtotal,
       tax,
       total,
       items: items.filter((item) => item.serviceId !== ""),
     };
+
 
     try {
       if (modalType === "create") {
@@ -826,6 +858,18 @@ const TransaksiPage = () => {
                   { value: "cancelled", label: "Cancelled" },
                 ]}
                 onChange={(val) => setFormData({ ...formData, status: val })}
+                disabled={modalType === "detail"}
+              />
+            </div>
+
+            <div>
+              <Label>Tanggal Transaksi</Label>
+              <Input
+                type="datetime-local"
+                value={formData.createdAt}
+                onChange={(e) =>
+                  setFormData({ ...formData, createdAt: e.target.value })
+                }
                 disabled={modalType === "detail"}
               />
             </div>
